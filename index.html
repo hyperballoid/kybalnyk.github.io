@@ -1,0 +1,243 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Портфоліо розробника та дизайнера">
+    <meta name="keywords" content="портфоліо, веб-розробка, дизайн, мобільні додатки">
+    <meta name="author" content="Ваше Ім'я">
+    <title>Моє Портфоліо</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.15/Babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@11.2.10/dist/framer-motion.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { motion } = window.FramerMotion;
+
+        // Дані для портфоліо (можна розширювати)
+        const categories = [
+            {
+                id: 'web',
+                title: 'Веб-розробка',
+                image: 'assets/web.jpg',
+                projects: [
+                    { id: 1, title: 'Веб-проєкт 1', image: 'assets/project1.jpg', description: 'Сучасний веб-додаток із використанням React та Tailwind CSS.' },
+                    { id: 2, title: 'Веб-проєкт 2', image: 'assets/project2.jpg', description: 'Інтерактивний сайт для онлайн-магазину.' },
+                ],
+            },
+            {
+                id: 'design',
+                title: 'Дизайн',
+                image: 'assets/design.jpg',
+                projects: [
+                    { id: 1, title: 'Дизайн 1', image: 'assets/design1.jpg', description: 'UI/UX дизайн для мобільного додатку.' },
+                    { id: 2, title: 'Дизайн 2', image: 'assets/design2.jpg', description: 'Брендинг для стартапу.' },
+                ],
+            },
+            {
+                id: 'mobile',
+                title: 'Мобільні додатки',
+                image: 'assets/mobile.jpg',
+                projects: [
+                    { id: 1, title: 'Мобільний додаток 1', image: 'assets/mobile1.jpg', description: 'Додаток для планування завдань.' },
+                    { id: 2, title: 'Мобільний додаток 2', image: 'assets/mobile2.jpg', description: 'Фітнес-додаток із трекером активності.' },
+                ],
+            },
+        ];
+
+        const App = () => {
+            const [selectedCategory, setSelectedCategory] = useState(null);
+
+            return (
+                <div className="min-h-screen bg-gray-100">
+                    {/* Навігація */}
+                    <motion.nav
+                        initial={{ y: -50 }}
+                        animate={{ y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="fixed top-0 w-full bg-gray-900 text-white z-50"
+                    >
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center">
+                            <h1 className="text-2xl font-bold">Моє Портфоліо</h1>
+                            <div className="mt-2 sm:mt-0 space-x-4">
+                                <a href="#home" className="hover:text-gray-300">Головна</a>
+                                <a href="#categories" className="hover:text-gray-300">Категорії</a>
+                                <a href="#contact" className="hover:text-gray-300">Контакти</a>
+                            </div>
+                        </div>
+                    </motion.nav>
+
+                    {/* Герой */}
+                    <motion.section
+                        id="home"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1 }}
+                        className="h-screen flex flex-col items-center justify-center bg-cover bg-center"
+                        style={{ backgroundImage: "url('assets/hero-bg.jpg')" }}
+                    >
+                        <img
+                            src="assets/author.jpg"
+                            alt="Фото автора"
+                            className="w-32 h-32 rounded-full mb-4 object-cover"
+                        />
+                        <h1 className="text-4xl sm:text-5xl font-bold text-white">Ваше Ім'я</h1>
+                        <p className="text-lg text-white">Розробник та дизайнер</p>
+                        <div className="mt-4 text-white text-center">
+                            <p>Телефон: +380 123 456 789</p>
+                            <p>Email: example@email.com</p>
+                            <div className="flex justify-center space-x-4 mt-2">
+                                <a href="https://facebook.com" className="hover:text-gray-300">Facebook</a>
+                                <a href="https://linkedin.com" className="hover:text-gray-300">LinkedIn</a>
+                                <a href="https://github.com" className="hover:text-gray-300">GitHub</a>
+                            </div>
+                        </div>
+                    </motion.section>
+
+                    {/* Категорії */}
+                    <section id="categories" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-bold text-center mb-8">Мої Роботи</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {categories.map((category) => (
+                                <motion.div
+                                    key={category.id}
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    whileInView={{ scale: 1, opacity: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="bg-white rounded-lg shadow-lg overflow-hidden"
+                                >
+                                    <img
+                                        src={category.image}
+                                        alt={category.title}
+                                        className="w-full h-48 object-cover"
+                                        loading="lazy"
+                                    />
+                                    <div className="p-4">
+                                        <h3 className="text-xl font-semibold">{category.title}</h3>
+                                        <button
+                                            onClick={() => setSelectedCategory(category)}
+                                            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                                        >
+                                            Бачити більше
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* Детальна галерея категорії */}
+                    {selectedCategory && (
+                        <motion.section
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-gray-50"
+                        >
+                            <h2 className="text-3xl font-bold text-center mb-8">{selectedCategory.title}</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {selectedCategory.projects.map((project) => (
+                                    <motion.div
+                                        key={project.id}
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        whileInView={{ scale: 1, opacity: 1 }}
+                                        transition={{ duration: 0.5 }}
+                                        className="bg-white rounded-lg shadow-lg overflow-hidden"
+                                    >
+                                        <img
+                                            src={project.image}
+                                            alt={project.title}
+                                            className="w-full h-48 object-cover"
+                                            loading="lazy"
+                                        />
+                                        <div className="p-4">
+                                            <h3 className="text-xl font-semibold">{project.title}</h3>
+                                            <p className="text-gray-600">{project.description}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                            <div className="mt-8 text-center">
+                                <h3 className="text-xl font-semibold">Інші категорії</h3>
+                                <div className="flex justify-center space-x-4 mt-4">
+                                    {categories
+                                        .filter((cat) => cat.id !== selectedCategory.id)
+                                        .map((cat) => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => setSelectedCategory(cat)}
+                                                className="text-blue-500 hover:underline"
+                                            >
+                                                {cat.title}
+                                            </button>
+                                        ))}
+                                </div>
+                            </div>
+                        </motion.section>
+                    )}
+
+                    {/* Контакти */}
+                    <section id="contact" className="py-16 bg-gray-900 text-white">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                            <h2 className="text-3xl font-bold mb-8">Зв'яжіться зі мною</h2>
+                            <p>Телефон: +380 123 456 789</p>
+                            <p>Email: example@email.com</p>
+                            <div className="flex justify-center space-x-4 mt-4">
+                                <a href="https://facebook.com" className="hover:text-gray-300">Facebook</a>
+                                <a href="https://linkedin.com" className="hover:text-gray-300">LinkedIn</a>
+                                <a href="https://github.com" className="hover:text-gray-300">GitHub</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
